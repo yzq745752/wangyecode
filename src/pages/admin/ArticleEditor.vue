@@ -2,7 +2,8 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
-import { Save, Eye, Edit3, Terminal, Folder, Tag as TagIcon } from 'lucide-vue-next'
+import { Save, Eye, Edit3, Terminal, Folder, Tag as TagIcon, Image, Upload } from 'lucide-vue-next'
+import apiClient from '@/api/client'
 import { articleApi, categoryApi, tagApi } from '@/api'
 import type { Category, Tag } from '@/types'
 
@@ -19,6 +20,8 @@ const categories = ref<Category[]>([])
 const tags = ref<Tag[]>([])
 const loading = ref(false)
 const isPreview = ref(false)
+const coverUploading = ref(false)
+const contentUploading = ref(false)
 
 const articleId = computed(() => {
   const id = route.params.id as string
@@ -106,6 +109,40 @@ const toggleTag = (tagId: number) => {
   }
 }
 
+const uploadCoverImage = async (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  coverUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('image', file)
+    const { data } = await apiClient.post('/api/upload', formData)
+    coverImage.value = data.url
+  } catch {
+    alert('封面图片上传失败')
+  } finally {
+    coverUploading.value = false
+    ;(e.target as HTMLInputElement).value = ''
+  }
+}
+
+const uploadContentImage = async (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  contentUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('image', file)
+    const { data } = await apiClient.post('/api/upload', formData)
+    content.value += `\n![${file.name}](${data.url})\n`
+  } catch {
+    alert('图片上传失败')
+  } finally {
+    contentUploading.value = false
+    ;(e.target as HTMLInputElement).value = ''
+  }
+}
+
 onMounted(async () => {
   await Promise.all([loadCategories(), loadTags()])
   await loadArticle()
@@ -190,12 +227,19 @@ onMounted(async () => {
 
             <div>
               <label class="block text-xs font-mono text-text-secondary mb-2">cover image</label>
-              <input
-                v-model="coverImage"
-                type="text"
-                class="input-geek"
-                placeholder="https://example.com/image.jpg"
-              />
+              <div class="flex gap-2">
+                <input
+                  v-model="coverImage"
+                  type="text"
+                  class="input-geek flex-1"
+                  placeholder="https://example.com/image.jpg"
+                />
+                <label class="btn btn-secondary cursor-pointer flex items-center gap-1.5 text-xs !px-3">
+                  <Upload class="w-3.5 h-3.5" />
+                  <span>{{ coverUploading ? '...' : 'upload' }}</span>
+                  <input type="file" accept="image/*" class="hidden" @change="uploadCoverImage" />
+                </label>
+              </div>
             </div>
 
             <div>
@@ -214,7 +258,12 @@ onMounted(async () => {
           <div class="card-header">
             <div class="card-header-dot" />
             <span class="font-mono text-xs font-bold text-text-secondary uppercase">content</span>
-            <div class="ml-auto">
+            <div class="ml-auto flex items-center gap-2">
+              <label class="flex items-center gap-1.5 text-xs text-text-dim hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-bg-hover cursor-pointer">
+                <Image class="w-3.5 h-3.5" />
+                <span>{{ contentUploading ? '...' : 'image' }}</span>
+                <input type="file" accept="image/*" class="hidden" @change="uploadContentImage" />
+              </label>
               <button
                 @click="isPreview = !isPreview"
                 class="flex items-center gap-1.5 text-xs text-text-dim hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-bg-hover"

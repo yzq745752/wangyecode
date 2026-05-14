@@ -34,6 +34,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/admin',
+    redirect: '/admin/dashboard',
     component: () => import('@/layouts/AdminLayout.vue'),
     meta: { requiresAuth: true },
     children: [

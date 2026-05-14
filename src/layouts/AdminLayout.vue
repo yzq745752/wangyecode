@@ -56,7 +56,7 @@ const handleLogout = () => {
     </aside>
 
     <main class="flex-1 p-6 overflow-y-auto relative z-10">
-      <slot />
+      <router-view />
     </main>
   </div>
 </template>

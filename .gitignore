@@ -13,3 +13,5 @@
 pkg/
 src/
 node_modules/
+.env
+docker-compose.override.yml

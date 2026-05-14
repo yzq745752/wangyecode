@@ -6,6 +6,7 @@ import initSqlJs from 'sql.js'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import multer from 'multer'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -14,9 +15,39 @@ const app = express()
 const PORT = 3001
 const JWT_SECRET = 'blog-jwt-secret-key-2024'
 const DB_PATH = path.join(__dirname, '../data/blog.db')
+const UPLOADS_DIR = path.join(__dirname, '../data/uploads')
+
+// Ensure uploads directory exists
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true })
+}
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname)
+    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`
+    cb(null, name)
+  },
+})
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
+    const ext = path.extname(file.originalname).toLowerCase()
+    if (allowed.includes(ext)) {
+      cb(null, true)
+    } else {
+      cb(new Error('仅支持图片文件 (jpg, jpeg, png, gif, webp, svg)'))
+    }
+  },
+})
 
 app.use(cors())
 app.use(express.json())
+app.use('/uploads', express.static(UPLOADS_DIR))
 
 const SqlJs = await initSqlJs()
 
@@ -152,6 +183,24 @@ app.post('/api/auth/login', (req, res) => {
 app.get('/api/auth/verify', authenticateToken, (req, res) => {
   const user = (req as any).user
   res.json({ user })
+})
+
+app.post('/api/upload', authenticateToken, (req, res) => {
+  upload.single('image')(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ message: '文件大小不能超过 5MB' })
+      }
+      return res.status(400).json({ message: err.message || '上传失败' })
+    }
+    if (!req.file) {
+      return res.status(400).json({ message: '请选择图片' })
+    }
+    res.json({
+      url: `/uploads/${req.file.filename}`,
+      filename: req.file.filename,
+    })
+  })
 })
 
 app.get('/api/articles', (req, res) => {
