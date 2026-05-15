@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, LogIn, Menu, X, Terminal, Command } from 'lucide-vue-next'
+import { Search, LogIn, Menu, X, Terminal, Command, Sun, Moon } from 'lucide-vue-next'
+import { useTheme } from '@/composables/useTheme'
+
+const { theme, toggle: toggleTheme } = useTheme()
 
 const router = useRouter()
 const isMenuOpen = ref(false)
@@ -86,6 +89,7 @@ onUnmounted(() => {
 
 const navLinks = [
   { name: '~/home', path: '/' },
+  { name: '~/archive', path: '/archive' },
   { name: '~/about', path: '/about' },
 ]
 </script>
@@ -115,6 +119,15 @@ const navLinks = [
         </div>
 
         <div class="flex items-center gap-1">
+          <button
+            @click.stop="toggleTheme"
+            class="p-2 text-text-secondary hover:text-primary transition-all rounded-md hover:bg-bg-hover"
+            :title="theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+          >
+            <Sun v-if="theme === 'dark'" class="w-4 h-4" />
+            <Moon v-else class="w-4 h-4" />
+          </button>
+
           <button
             @click.stop="showSearch = !showSearch; isMenuOpen = false; showLogin = false"
             class="p-2 text-text-secondary hover:text-primary transition-all rounded-md hover:bg-bg-hover"

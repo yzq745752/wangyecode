@@ -3,6 +3,9 @@ import { ref, onMounted } from 'vue'
 import { Plus, Edit, Trash2, Folder, Terminal } from 'lucide-vue-next'
 import { categoryApi } from '@/api'
 import type { Category } from '@/types'
+import { useToastStore } from '@/stores/toast'
+
+const toast = useToastStore()
 
 const categories = ref<Category[]>([])
 const loading = ref(true)
@@ -39,23 +42,28 @@ const handleSubmit = async () => {
   try {
     if (editingId.value) {
       await categoryApi.update(editingId.value, { name: formName.value })
+      toast.success('分类已更新')
     } else {
       await categoryApi.create({ name: formName.value })
+      toast.success('分类已创建')
     }
     showDialog.value = false
     await loadCategories()
   } catch (error) {
     console.error('Failed to save category:', error)
+    toast.error('保存失败，可能名称已存在')
   }
 }
 
 const handleDelete = async (id: number) => {
-  if (!confirm('确定删除此分类？')) return
+  if (!window.confirm('确定删除此分类？')) return
   try {
     await categoryApi.delete(id)
     await loadCategories()
+    toast.success('分类已删除')
   } catch (error) {
     console.error('Failed to delete category:', error)
+    toast.error('删除失败，请检查是否有文章使用此分类')
   }
 }
 

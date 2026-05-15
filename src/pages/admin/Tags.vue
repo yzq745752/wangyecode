@@ -3,6 +3,9 @@ import { ref, onMounted } from 'vue'
 import { Plus, Edit, Trash2, Tag as TagIcon, Terminal } from 'lucide-vue-next'
 import { tagApi } from '@/api'
 import type { Tag } from '@/types'
+import { useToastStore } from '@/stores/toast'
+
+const toast = useToastStore()
 
 const tags = ref<Tag[]>([])
 const loading = ref(true)
@@ -39,23 +42,28 @@ const handleSubmit = async () => {
   try {
     if (editingId.value) {
       await tagApi.update(editingId.value, { name: formName.value })
+      toast.success('标签已更新')
     } else {
       await tagApi.create({ name: formName.value })
+      toast.success('标签已创建')
     }
     showDialog.value = false
     await loadTags()
   } catch (error) {
     console.error('Failed to save tag:', error)
+    toast.error('保存失败，可能名称已存在')
   }
 }
 
 const handleDelete = async (id: number) => {
-  if (!confirm('确定删除此标签？')) return
+  if (!window.confirm('确定删除此标签？')) return
   try {
     await tagApi.delete(id)
     await loadTags()
+    toast.success('标签已删除')
   } catch (error) {
     console.error('Failed to delete tag:', error)
+    toast.error('删除失败')
   }
 }
 

@@ -6,6 +6,9 @@ import { Save, Eye, Edit3, Terminal, Folder, Tag as TagIcon, Image, Upload } fro
 import apiClient from '@/api/client'
 import { articleApi, categoryApi, tagApi } from '@/api'
 import type { Category, Tag } from '@/types'
+import { useToastStore } from '@/stores/toast'
+
+const toast = useToastStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -70,7 +73,7 @@ const loadArticle = async () => {
 
 const handleSubmit = async () => {
   if (!title.value || !content.value || !categoryId.value) {
-    alert('请填写必填项')
+    toast.error('请填写标题、内容和分类')
     return
   }
 
@@ -92,9 +95,10 @@ const handleSubmit = async () => {
     }
 
     router.push('/admin/articles')
+    toast.success('文章保存成功')
   } catch (error) {
     console.error('Failed to save article:', error)
-    alert('保存失败，请重试')
+    toast.error('保存失败，请重试')
   } finally {
     loading.value = false
   }

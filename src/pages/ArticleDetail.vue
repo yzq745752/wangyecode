@@ -1,14 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import CommentSection from '@/components/CommentSection.vue'
+import TableOfContents from '@/components/TableOfContents.vue'
+import RelatedArticles from '@/components/RelatedArticles.vue'
+import ShareButtons from '@/components/ShareButtons.vue'
 import { articleApi } from '@/api'
 import type { Article } from '@/types'
 import { Calendar, Tag, Eye, Clock, Terminal, ChevronLeft, Folder } from 'lucide-vue-next'
+import { useMeta } from '@/composables/useMeta'
 
 const route = useRoute()
 const article = ref<Article | null>(null)
 const loading = ref(true)
+const scrollProgress = ref(0)
+const { setArticleMeta } = useMeta()
 
 const loadArticle = async () => {
   loading.value = true
@@ -23,7 +30,40 @@ const loadArticle = async () => {
   }
 }
 
-onMounted(loadArticle)
+// Set SEO meta tags
+watch(article, (val) => {
+  if (val) {
+    const summary = val.summary || val.content.replace(/<[^>]*>/g, '').slice(0, 200)
+    setArticleMeta(val.title, summary, val.coverImage)
+  }
+}, { immediate: false })
+
+const handleScroll = () => {
+  const docEl = document.documentElement
+  const scrollTop = window.scrollY || docEl.scrollTop
+  const docHeight = docEl.scrollHeight - window.innerHeight
+  scrollProgress.value = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0
+}
+
+onMounted(() => {
+  loadArticle()
+  window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
+watch(article, async () => {
+  if (article.value) {
+    await nextTick()
+    if (typeof hljs !== 'undefined') {
+      document.querySelectorAll('.geek-prose pre code').forEach((block) => {
+        hljs.highlightElement(block as HTMLElement)
+      })
+    }
+  }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 
 const readTime = (content: string) => {
   const wordsPerMinute = 200
@@ -34,6 +74,9 @@ const readTime = (content: string) => {
 
 <template>
   <DefaultLayout>
+    <!-- Reading Progress Bar -->
+    <div class="reading-progress" :style="{ width: scrollProgress * 100 + '%' }" />
+
     <div v-if="loading" class="max-w-4xl mx-auto px-4 py-16">
       <div class="animate-pulse space-y-6">
         <div class="h-8 bg-bg-elevated rounded w-3/4" />
@@ -46,7 +89,7 @@ const readTime = (content: string) => {
       </div>
     </div>
 
-    <article v-else-if="article" class="max-w-4xl mx-auto px-4 py-12">
+    <article v-else-if="article" class="max-w-6xl mx-auto px-4 py-12">
       <!-- Breadcrumb -->
       <div class="flex items-center gap-2 mb-8 text-xs font-mono text-text-dim">
         <router-link to="/" class="hover:text-primary transition-colors">~/home</router-link>
@@ -95,42 +138,63 @@ const readTime = (content: string) => {
         </div>
       </header>
 
-      <!-- Cover Image -->
-      <div v-if="article.coverImage" class="mb-10 rounded-xl overflow-hidden border border-border-subtle">
-        <img
-          :src="article.coverImage"
-          :alt="article.title"
-          class="w-full aspect-video object-cover"
-        />
-      </div>
+      <div class="flex gap-10">
+        <!-- Main Content -->
+        <div class="flex-1 min-w-0 max-w-4xl">
+          <!-- Cover Image -->
+          <div v-if="article.coverImage" class="mb-10 rounded-xl overflow-hidden border border-border-subtle">
+            <img
+              :src="article.coverImage"
+              :alt="article.title"
+              class="w-full aspect-video object-cover"
+            />
+          </div>
 
-      <!-- Divider -->
-      <div class="flex items-center gap-3 mb-10">
-        <div class="h-px flex-1 bg-gradient-to-r from-primary/30 to-transparent" />
-        <Terminal class="w-4 h-4 text-primary" />
-        <div class="h-px flex-1 bg-gradient-to-l from-primary/30 to-transparent" />
-      </div>
+          <!-- Divider -->
+          <div class="flex items-center gap-3 mb-10">
+            <div class="h-px flex-1 bg-gradient-to-r from-primary/30 to-transparent" />
+            <Terminal class="w-4 h-4 text-primary" />
+            <div class="h-px flex-1 bg-gradient-to-l from-primary/30 to-transparent" />
+          </div>
 
-      <!-- Content -->
-      <div class="geek-prose mb-16">
-        <div v-html="article.content" />
-      </div>
+          <!-- Content -->
+          <div class="geek-prose mb-16">
+            <div v-html="article.content" />
+          </div>
 
-      <!-- Footer -->
-      <footer class="border-t border-border-subtle pt-8">
-        <div class="flex items-center gap-2 text-text-dim font-mono text-sm">
-          <Tag class="w-4 h-4 text-secondary" />
-          <span>tags:</span>
-          <router-link
-            v-for="tag in article.tags"
-            :key="tag.id"
-            :to="`/tag/${tag.name}`"
-            class="badge badge-dim hover:border-secondary/50 transition-all"
-          >
-            {{ tag.name }}
-          </router-link>
+          <!-- Footer -->
+          <footer class="border-t border-border-subtle pt-8">
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+              <div class="flex items-center gap-2 text-text-dim font-mono text-sm">
+                <Tag class="w-4 h-4 text-secondary" />
+                <span>tags:</span>
+                <router-link
+                  v-for="tag in article.tags"
+                  :key="tag.id"
+                  :to="`/tag/${tag.name}`"
+                  class="badge badge-dim hover:border-secondary/50 transition-all"
+                >
+                  {{ tag.name }}
+                </router-link>
+              </div>
+              <ShareButtons :title="article.title" />
+            </div>
+          </footer>
+
+          <!-- Related Articles -->
+          <RelatedArticles :article-id="article.id" />
+
+          <!-- Comments -->
+          <CommentSection :article-id="article.id" />
         </div>
-      </footer>
+
+        <!-- TOC Sidebar -->
+        <aside class="hidden xl:block w-64 flex-shrink-0">
+          <div class="sticky top-20">
+            <TableOfContents :content="article.content" />
+          </div>
+        </aside>
+      </div>
     </article>
 
     <div v-else class="max-w-4xl mx-auto px-4 py-16 text-center">
@@ -169,12 +233,36 @@ const readTime = (content: string) => {
 }
 
 .geek-prose :deep(pre) {
-  @apply bg-bg-elevated text-text-primary p-5 rounded-xl overflow-x-auto my-6 border border-border-subtle;
+  @apply bg-[#282c34] text-text-primary p-5 rounded-xl overflow-x-auto my-6 border border-border-subtle relative;
 }
 
 .geek-prose :deep(pre code) {
-  @apply bg-transparent p-0 text-text-primary border-0 text-sm;
+  @apply bg-transparent p-0 text-text-primary border-0 text-sm leading-relaxed;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
+
+/* highlight.js overrides for atom-one-dark in geek-prose */
+.geek-prose :deep(pre .hljs) {
+  @apply bg-transparent p-0;
+}
+
+.geek-prose :deep(pre code .hljs-keyword) { color: #c678dd; }
+.geek-prose :deep(pre code .hljs-string) { color: #98c379; }
+.geek-prose :deep(pre code .hljs-number) { color: #d19a66; }
+.geek-prose :deep(pre code .hljs-function) { color: #61afef; }
+.geek-prose :deep(pre code .hljs-title) { color: #61afef; }
+.geek-prose :deep(pre code .hljs-comment) { color: #5c6370; font-style: italic; }
+.geek-prose :deep(pre code .hljs-attr) { color: #d19a66; }
+.geek-prose :deep(pre code .hljs-built_in) { color: #c678dd; }
+.geek-prose :deep(pre code .hljs-literal) { color: #56b6c2; }
+.geek-prose :deep(pre code .hljs-type) { color: #e5c07b; }
+.geek-prose :deep(pre code .hljs-params) { color: #e5c07b; }
+.geek-prose :deep(pre code .hljs-attribute) { color: #e06c75; }
+.geek-prose :deep(pre code .hljs-selector-class) { color: #e5c07b; }
+.geek-prose :deep(pre code .hljs-selector-tag) { color: #e06c75; }
+.geek-prose :deep(pre code .hljs-meta) { color: #61afef; }
+.geek-prose :deep(pre code .hljs-tag) { color: #e06c75; }
+.geek-prose :deep(pre code .hljs-name) { color: #e06c75; }
 
 .geek-prose :deep(blockquote) {
   @apply border-l-2 border-primary/50 pl-5 text-text-dim italic my-6;
@@ -206,6 +294,11 @@ const readTime = (content: string) => {
 
 .geek-prose :deep(table) {
   @apply w-full border-collapse my-6 text-sm;
+}
+
+.reading-progress {
+  @apply fixed top-0 left-0 h-0.5 bg-gradient-to-r from-primary via-secondary to-accent z-[100] transition-all duration-150;
+  box-shadow: 0 0 8px rgba(var(--color-primary-rgb), 0.4);
 }
 
 .geek-prose :deep(th) {

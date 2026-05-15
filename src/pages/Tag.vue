@@ -1,27 +1,52 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import ArticleCard from '@/components/ArticleCard.vue'
 import { articleApi } from '@/api'
 import type { Article } from '@/types'
+import { Tag as TagIcon, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { useMeta } from '@/composables/useMeta'
+
+const PER_PAGE = 12
 
 const route = useRoute()
 const articles = ref<Article[]>([])
 const loading = ref(true)
 const tagName = ref('')
+const page = ref(1)
+const totalArticles = ref(0)
+const totalPages = ref(1)
 
-onMounted(async () => {
+const loadArticles = async (pageNum: number) => {
   loading.value = true
-  tagName.value = route.params.name as string
+  page.value = pageNum
   try {
-    const { data } = await articleApi.getList(1, 99, { tag: tagName.value })
+    const { data } = await articleApi.getList(pageNum, PER_PAGE, { tag: tagName.value })
     articles.value = data.data
+    totalArticles.value = data.total
+    totalPages.value = Math.ceil(data.total / PER_PAGE) || 1
   } catch (error) {
     console.error('Failed to load articles:', error)
   } finally {
     loading.value = false
   }
+}
+
+onMounted(async () => {
+  tagName.value = route.params.name as string
+  await loadArticles(1)
+})
+
+const { setDefaultMeta } = useMeta()
+
+watch(() => route.params.name, (newName) => {
+  tagName.value = newName as string
+  loadArticles(1)
+})
+
+watch(tagName, (name) => {
+  if (name) setDefaultMeta(`标签: ${name}`)
 })
 </script>
 
@@ -48,12 +73,43 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div v-else-if="articles.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <ArticleCard
-          v-for="article in articles"
-          :key="article.id"
-          :article="article"
-        />
+      <div v-else-if="articles.length > 0">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <ArticleCard
+            v-for="article in articles"
+            :key="article.id"
+            :article="article"
+          />
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="flex items-center justify-center gap-4 mt-10">
+          <button
+            @click="loadArticles(page - 1)"
+            :disabled="page <= 1"
+            class="btn btn-ghost flex items-center gap-1 !px-4"
+            :class="{ 'opacity-30 cursor-not-allowed': page <= 1 }"
+          >
+            <ChevronLeft class="w-4 h-4" />
+            <span class="font-mono text-xs">prev</span>
+          </button>
+
+          <div class="flex items-center gap-2 font-mono text-xs text-text-dim">
+            <span class="px-3 py-1.5 bg-bg-elevated rounded-lg border border-border-subtle text-primary font-bold">{{ page }}</span>
+            <span>/</span>
+            <span>{{ totalPages }}</span>
+          </div>
+
+          <button
+            @click="loadArticles(page + 1)"
+            :disabled="page >= totalPages"
+            class="btn btn-ghost flex items-center gap-1 !px-4"
+            :class="{ 'opacity-30 cursor-not-allowed': page >= totalPages }"
+          >
+            <span class="font-mono text-xs">next</span>
+            <ChevronRight class="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       <div v-else class="text-center py-20">

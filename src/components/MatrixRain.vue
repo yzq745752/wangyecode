@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 
+const RAIN_COLOR = '#33ff77'
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animationId: number | null = null
 
@@ -44,12 +45,12 @@ onMounted(() => {
   // Pre-fill the canvas with characters so it looks complete on first frame
   ctx.fillStyle = 'rgba(8, 8, 16, 1)'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
-  ctx.fillStyle = '#00ff9d'
+  ctx.fillStyle = RAIN_COLOR
   ctx.font = `${fontSize}px monospace`
   for (let i = 0; i < columns; i++) {
     for (let j = 0; j < drops[i]; j++) {
       const text = chars[Math.floor(Math.random() * chars.length)]
-      ctx.globalAlpha = 0.1 + Math.random() * 0.5
+      ctx.globalAlpha = 0.3 + Math.random() * 0.5
       ctx.fillText(text, i * fontSize, j * fontSize)
     }
     ctx.globalAlpha = 1
@@ -74,7 +75,7 @@ onMounted(() => {
     ctx.fillStyle = 'rgba(8, 8, 16, 0.05)'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-    ctx.fillStyle = '#00ff9d'
+    ctx.fillStyle = RAIN_COLOR
     ctx.font = `${fontSize}px monospace`
 
     for (let i = 0; i < drops.length; i++) {
@@ -97,9 +98,10 @@ onMounted(() => {
 
       // Brighter head character
       if (Math.random() > 0.5) {
-        ctx.fillStyle = '#00ff9d'
+        ctx.fillStyle = RAIN_COLOR
       } else {
-        ctx.fillStyle = `rgba(0, 255, 157, ${0.3 + Math.random() * 0.7})`
+        const alpha = 0.5 + Math.random() * 0.5
+        ctx.fillStyle = `rgba(51, 255, 119, ${alpha})`
       }
 
       ctx.fillText(text, x, y)
@@ -136,6 +138,7 @@ onMounted(() => {
   height: 100%;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.15;
+  opacity: var(--matrix-rain-opacity, 0.15);
+  transition: opacity 0.5s ease;
 }
 </style>

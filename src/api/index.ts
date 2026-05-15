@@ -3,6 +3,7 @@ import type {
   Article,
   Category,
   Tag,
+  Comment,
   ArticleListResponse,
   LoginRequest,
   LoginResponse,
@@ -14,6 +15,9 @@ export const articleApi = {
 
   getById: (id: number) =>
     apiClient.get<{ data: Article }>(`/articles/${id}`),
+
+  getRelated: (id: number) =>
+    apiClient.get<{ data: Article[] }>(`/articles/${id}/related`),
 
   create: (data: Partial<Article>) =>
     apiClient.post<{ data: Article }>('/articles', data),
@@ -53,10 +57,52 @@ export const tagApi = {
     apiClient.delete(`/tags/${id}`),
 }
 
+export const commentApi = {
+  getByArticle: (articleId: number) =>
+    apiClient.get<{ data: Comment[] }>(`/articles/${articleId}/comments`),
+
+  create: (articleId: number, data: { author: string; email?: string; content: string; parentId?: number | null }) =>
+    apiClient.post<{ data: Comment; message: string }>(`/articles/${articleId}/comments`, data),
+}
+
+export const adminCommentApi = {
+  getAll: (page = 1, limit = 20) =>
+    apiClient.get<{ data: Comment[]; total: number }>('/admin/comments', { params: { page, limit } }),
+
+  approve: (id: number, isApproved: number) =>
+    apiClient.put(`/admin/comments/${id}/approve`, { isApproved }),
+
+  delete: (id: number) =>
+    apiClient.delete(`/admin/comments/${id}`),
+}
+
 export const authApi = {
   login: (data: LoginRequest) =>
     apiClient.post<LoginResponse>('/auth/login', data),
 
   verify: () =>
     apiClient.get<{ user: { id: number; username: string } }>('/auth/verify'),
+}
+
+export interface ImageItem {
+  filename: string
+  url: string
+  size: number
+  createdAt: string
+}
+
+export const imageApi = {
+  getAll: () =>
+    apiClient.get<{ data: ImageItem[] }>('/admin/images'),
+
+  delete: (filename: string) =>
+    apiClient.delete(`/admin/images/${filename}`),
+
+  upload: (file: File) => {
+    const formData = new FormData()
+    formData.append('image', file)
+    return apiClient.post<{ url: string; filename: string }>('/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
 }

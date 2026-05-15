@@ -32,7 +32,10 @@
         </div>
 
         <div>
-          <h4 class="font-mono text-xs font-bold text-text-secondary uppercase tracking-wider mb-4">contact</h4>
+          <h4 class="font-mono text-xs font-bold text-text-secondary uppercase tracking-wider mb-4">subscribe</h4>
+          <p class="text-text-dim text-sm font-mono mb-2">
+            <span class="text-primary">$</span> <a href="/rss.xml" target="_blank" class="hover:text-primary transition-colors">rss feed</a>
+          </p>
           <p class="text-text-dim text-sm font-mono">
             <span class="text-secondary">@</span> email: 954409711@qq.com
           </p>

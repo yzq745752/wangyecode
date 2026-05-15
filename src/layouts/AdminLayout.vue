@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { LayoutDashboard, FileText, Folder, Tag, LogOut, Terminal } from 'lucide-vue-next'
+import { LayoutDashboard, FileText, Folder, Tag, MessageSquare, Image, User, KeyRound, LogOut, Terminal } from 'lucide-vue-next'
 import MatrixRain from '@/components/MatrixRain.vue'
 
 const router = useRouter()
@@ -12,6 +12,10 @@ const navItems = [
   { name: 'articles', path: '/admin/articles', icon: FileText },
   { name: 'categories', path: '/admin/categories', icon: Folder },
   { name: 'tags', path: '/admin/tags', icon: Tag },
+  { name: 'comments', path: '/admin/comments', icon: MessageSquare },
+  { name: 'images', path: '/admin/images', icon: Image },
+  { name: 'about', path: '/admin/about', icon: User },
+  { name: 'password', path: '/admin/password', icon: KeyRound },
 ]
 
 const handleLogout = () => {

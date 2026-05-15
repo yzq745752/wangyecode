@@ -48,7 +48,17 @@ export interface LoginResponse {
   user: User
 }
 
-export interface ApiError {
+export interface Comment {
+  id: number
+  articleId: number
+  parentId: number | null
+  author: string
+  email: string
+  content: string
+  isApproved: number
+  createdAt: string
+  replies?: Comment[]
+}
   message: string
   statusCode: number
 }

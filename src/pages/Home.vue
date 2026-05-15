@@ -1,26 +1,47 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import { useMeta } from '@/composables/useMeta'
 import ArticleCard from '@/components/ArticleCard.vue'
 import { articleApi, categoryApi, tagApi } from '@/api'
 import type { Article, Category, Tag } from '@/types'
-import { Folder, Tag as TagIcon, ChevronRight } from 'lucide-vue-next'
+import { Folder, Tag as TagIcon, ChevronRight, ChevronDown } from 'lucide-vue-next'
+
+const PER_PAGE = 9
 
 const articles = ref<Article[]>([])
 const categories = ref<Category[]>([])
 const tags = ref<Tag[]>([])
 const loading = ref(true)
+const loadingMore = ref(false)
+const page = ref(1)
+const totalArticles = ref(0)
 
-const loadArticles = async () => {
-  loading.value = true
+const hasMore = computed(() => articles.value.length < totalArticles.value)
+
+const loadArticles = async (pageNum: number, append = false) => {
+  if (!append) loading.value = true
   try {
-    const { data } = await articleApi.getList(1, 9)
-    articles.value = data.data
+    const { data } = await articleApi.getList(pageNum, PER_PAGE)
+    if (append) {
+      articles.value.push(...data.data)
+    } else {
+      articles.value = data.data
+    }
+    totalArticles.value = data.total
+    page.value = pageNum
   } catch (error) {
     console.error('Failed to load articles:', error)
   } finally {
     loading.value = false
+    loadingMore.value = false
   }
+}
+
+const loadMore = async () => {
+  if (loadingMore.value || !hasMore.value) return
+  loadingMore.value = true
+  await loadArticles(page.value + 1, true)
 }
 
 const loadCategories = async () => {
@@ -42,7 +63,7 @@ const loadTags = async () => {
 }
 
 onMounted(async () => {
-  await Promise.all([loadArticles(), loadCategories(), loadTags()])
+  await Promise.all([loadArticles(1), loadCategories(), loadTags()])
 })
 
 const handleCategoryClick = (categoryName: string) => {
@@ -52,6 +73,9 @@ const handleCategoryClick = (categoryName: string) => {
 const handleTagClick = (tagName: string) => {
   window.location.href = `/tag/${encodeURIComponent(tagName)}`
 }
+
+const { setDefaultMeta } = useMeta()
+setDefaultMeta()
 </script>
 
 <template>
@@ -76,9 +100,9 @@ const handleTagClick = (tagName: string) => {
         </p>
 
         <div class="flex items-center justify-center gap-4 animate-fade-in-up" style="animation-delay: 0.3s">
-          <router-link to="/about" class="btn btn-primary">
-            <span class="text-primary">$</span> about-me
-          </router-link>
+          <a href="https://github.com/yzq745752" target="_blank" rel="noopener" class="btn btn-primary">
+            <span class="text-primary">$</span> github
+          </a>
           <a href="#articles" class="btn btn-ghost">
             <span class="text-secondary">></span> read-logs
           </a>
@@ -110,13 +134,29 @@ const handleTagClick = (tagName: string) => {
             </div>
           </div>
 
-          <div v-else-if="articles.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <ArticleCard
-              v-for="(article, index) in articles"
-              :key="article.id"
-              :article="article"
-              :style="{ 'animation-delay': `${index * 0.1}s` }"
-            />
+          <div v-else-if="articles.length > 0">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <ArticleCard
+                v-for="(article, index) in articles"
+                :key="article.id"
+                :article="article"
+                :style="{ 'animation-delay': `${index * 0.1}s` }"
+              />
+            </div>
+
+            <!-- Load More -->
+            <div v-if="hasMore" class="flex justify-center mt-10">
+              <button
+                @click="loadMore"
+                :disabled="loadingMore"
+                class="btn btn-ghost flex items-center gap-2 px-8"
+              >
+                <ChevronDown class="w-4 h-4" :class="{ 'animate-bounce': !loadingMore }" />
+                <span class="font-mono text-sm">
+                  {{ loadingMore ? 'loading...' : `load more (${articles.length}/${totalArticles})` }}
+                </span>
+              </button>
+            </div>
           </div>
 
           <div v-else class="card p-12 text-center">

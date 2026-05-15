@@ -4,8 +4,10 @@ import { useRouter } from 'vue-router'
 import { Plus, Edit, Trash2, Eye, Folder, Terminal } from 'lucide-vue-next'
 import { articleApi } from '@/api'
 import type { Article } from '@/types'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
+const toast = useToastStore()
 const articles = ref<Article[]>([])
 const loading = ref(true)
 
@@ -22,12 +24,14 @@ const loadArticles = async () => {
 }
 
 const handleDelete = async (id: number) => {
-  if (!confirm('确认删除此文章？')) return
+  if (!window.confirm('确认删除此文章？')) return
   try {
     await articleApi.delete(id)
     await loadArticles()
+    toast.success('文章已删除')
   } catch (error) {
     console.error('Failed to delete article:', error)
+    toast.error('删除失败')
   }
 }
 

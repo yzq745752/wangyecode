@@ -7,20 +7,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#00ff9d',
-        'primary-dim': '#00cc7d',
-        'primary-glow': 'rgba(0, 255, 157, 0.3)',
-        secondary: '#b19cd9',
-        accent: '#ff6b9d',
-        'bg-dark': '#0a0a0f',
-        'bg-card': '#12121a',
-        'bg-hover': '#1a1a2e',
-        'bg-elevated': '#16161f',
-        'text-primary': '#e4e4e7',
-        'text-secondary': '#71717a',
-        'text-dim': '#3f3f46',
-        'border-subtle': '#27272a',
-        'border-glow': 'rgba(0, 255, 157, 0.15)',
+        primary: 'rgb(var(--color-primary-rgb) / <alpha-value>)',
+        'primary-dim': 'rgb(var(--color-primary-dim-rgb) / <alpha-value>)',
+        secondary: 'rgb(var(--color-secondary-rgb) / <alpha-value>)',
+        accent: 'rgb(var(--color-accent-rgb) / <alpha-value>)',
+        'bg-dark': 'var(--color-bg-dark)',
+        'bg-card': 'var(--color-bg-card)',
+        'bg-hover': 'var(--color-bg-hover)',
+        'bg-elevated': 'var(--color-bg-elevated)',
+        'text-primary': 'var(--color-text-primary)',
+        'text-secondary': 'var(--color-text-primary)',
+        'text-dim': 'var(--color-text-primary)',
+        'border-subtle': 'var(--color-border-subtle)',
+        'border-glow': 'var(--color-border-glow)',
       },
       fontFamily: {
         mono: ['JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', 'monospace'],
@@ -39,8 +38,8 @@ export default {
       },
       keyframes: {
         'glow-pulse': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(0, 255, 157, 0.2)' },
-          '50%': { boxShadow: '0 0 40px rgba(0, 255, 157, 0.4)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(var(--color-primary-rgb), 0.2)' },
+          '50%': { boxShadow: '0 0 40px rgba(var(--color-primary-rgb), 0.4)' },
         },
         'fade-in-up': {
           '0%': { opacity: '0', transform: 'translateY(20px)' },
@@ -73,9 +72,9 @@ export default {
         },
       },
       boxShadow: {
-        'glow': '0 0 20px rgba(0, 255, 157, 0.15)',
-        'glow-lg': '0 0 40px rgba(0, 255, 157, 0.2)',
-        'glow-secondary': '0 0 20px rgba(177, 156, 217, 0.15)',
+        'glow': '0 0 20px rgba(var(--color-primary-rgb), 0.15)',
+        'glow-lg': '0 0 40px rgba(var(--color-primary-rgb), 0.2)',
+        'glow-secondary': '0 0 20px rgba(var(--color-secondary-rgb), 0.15)',
       },
       backgroundImage: {
         'grid-pattern': "linear-gradient(rgba(177, 156, 217, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(177, 156, 217, 0.03) 1px, transparent 1px)",

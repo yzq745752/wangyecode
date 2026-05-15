@@ -28,6 +28,16 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/About.vue'),
   },
   {
+    path: '/search',
+    name: 'Search',
+    component: () => import('@/pages/Search.vue'),
+  },
+  {
+    path: '/archive',
+    name: 'Archive',
+    component: () => import('@/pages/Archive.vue'),
+  },
+  {
     path: '/admin/login',
     name: 'AdminLogin',
     component: () => import('@/pages/admin/Login.vue'),
@@ -67,6 +77,26 @@ const routes: RouteRecordRaw[] = [
         path: 'tags',
         name: 'AdminTags',
         component: () => import('@/pages/admin/Tags.vue'),
+      },
+      {
+        path: 'comments',
+        name: 'AdminComments',
+        component: () => import('@/pages/admin/Comments.vue'),
+      },
+      {
+        path: 'images',
+        name: 'AdminImages',
+        component: () => import('@/pages/admin/ImageManager.vue'),
+      },
+      {
+        path: 'about',
+        name: 'AdminAbout',
+        component: () => import('@/pages/admin/AboutEditor.vue'),
+      },
+      {
+        path: 'password',
+        name: 'AdminPassword',
+        component: () => import('@/pages/admin/PasswordChange.vue'),
       },
     ],
   },
