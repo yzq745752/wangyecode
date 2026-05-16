@@ -13,7 +13,11 @@ const __dirname = path.dirname(__filename)
 
 const app = express()
 const PORT = 3001
-const JWT_SECRET = process.env.JWT_SECRET || 'blog-jwt-secret-key-2024'
+const JWT_SECRET = process.env.JWT_SECRET
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is required')
+  process.exit(1)
+}
 const DB_PATH = path.join(__dirname, '../data/blog.db')
 const UPLOADS_DIR = path.join(__dirname, '../data/uploads')
 
