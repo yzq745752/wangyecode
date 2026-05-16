@@ -8,7 +8,9 @@
     "dev:client": "vite",
     "dev:server": "tsx watch api/index.ts",
     "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "axios": "^1.7.9",
@@ -28,6 +30,7 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/dompurify": "^3.0.5",
@@ -37,10 +40,15 @@
     "@vitejs/plugin-vue": "^5.2.1",
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.1.0",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.9.1",
     "postcss": "^8.4.49",
+    "prettier": "^3.8.3",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.2",
     "typescript": "~5.7.2",
+    "typescript-eslint": "^8.59.3",
     "vite": "^6.0.5",
     "vue-tsc": "^2.2.0"
   }
