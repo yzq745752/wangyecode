@@ -869,7 +869,7 @@ app.put('/api/auth/password', authenticateToken, (req, res) => {
 
 // Sitemap
 app.get('/sitemap.xml', (req, res) => {
-  const BASE_URL = 'http://localhost:3000'
+  const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 
   const articles = db.exec(
     'SELECT id, title, updatedAt FROM articles ORDER BY updatedAt DESC'
@@ -912,7 +912,7 @@ ${urls}
 
 // RSS Feed
 app.get('/rss.xml', (req, res) => {
-  const BASE_URL = 'http://localhost:3000'
+  const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
 
   const articles = db.exec(
     `SELECT a.id, a.title, a.summary, a.content, a.createdAt, c.name as categoryName
