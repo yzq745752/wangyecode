@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url'
 import multer from 'multer'
 import rateLimit from 'express-rate-limit'
 import { initDb, saveDb, parseRows, parseFirstRow } from './db.js'
+import type { ArticleRow, CategoryRow, TagRow, CommentRow } from './types.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -178,6 +179,8 @@ const initConfig = () => {
 }
 initConfig()
 
+type AuthRequest = express.Request & { user: { id: number; username: string } }
+
 const authenticateToken = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const authHeader = req.headers['authorization']
   const token = authHeader && authHeader.split(' ')[1]
@@ -188,7 +191,7 @@ const authenticateToken = (req: express.Request, res: express.Response, next: ex
 
   try {
     const user = jwt.verify(token, JWT_SECRET) as { id: number; username: string }
-    ;(req as any).user = user
+    ;(req as AuthRequest).user = user
     next()
   } catch {
     return res.status(403).json({ message: '无效的令牌' })
@@ -224,7 +227,7 @@ app.post('/api/auth/login', loginLimiter, (req, res) => {
 })
 
 app.get('/api/auth/verify', authenticateToken, (req, res) => {
-  const user = (req as any).user
+  const user = (req as AuthRequest).user
   res.json({ user })
 })
 
@@ -304,18 +307,7 @@ app.get('/api/articles', (req, res) => {
   params.push(limit, offset)
 
   const articlesResult = db.exec(sql, params)
-  const articles: any[] = []
-
-  if (articlesResult.length > 0) {
-    const columns = articlesResult[0].columns
-    for (const row of articlesResult[0].values) {
-      const article: any = {}
-      columns.forEach((col, idx) => {
-        article[col] = row[idx]
-      })
-      articles.push(article)
-    }
-  }
+  const articles = parseRows<ArticleRow>(articlesResult)
 
   const articlesWithTags = articles.map((article) => {
     const tagsResult = db.exec(
@@ -323,17 +315,7 @@ app.get('/api/articles', (req, res) => {
       [article.id]
     )
 
-    const tags: any[] = []
-    if (tagsResult.length > 0) {
-      const tagColumns = tagsResult[0].columns
-      for (const row of tagsResult[0].values) {
-        const tag: any = {}
-        tagColumns.forEach((col, idx) => {
-          tag[col] = row[idx]
-        })
-        tags.push(tag)
-      }
-    }
+    const tags = parseRows<TagRow>(tagsResult)
 
     return {
       id: article.id,
@@ -369,16 +351,11 @@ app.get('/api/articles/:id', (req, res) => {
     [id]
   )
 
-  if (result.length === 0 || result[0].values.length === 0) {
+  const article = parseFirstRow<ArticleRow>(result)
+
+  if (!article) {
     return res.status(404).json({ message: '文章不存在' })
   }
-
-  const columns = result[0].columns
-  const row = result[0].values[0]
-  const article: any = {}
-  columns.forEach((col, idx) => {
-    article[col] = row[idx]
-  })
 
   db.run('UPDATE articles SET viewCount = viewCount + 1 WHERE id = ?', [id])
   save()
@@ -388,17 +365,7 @@ app.get('/api/articles/:id', (req, res) => {
     [id]
   )
 
-  const tags: any[] = []
-  if (tagsResult.length > 0) {
-    const tagColumns = tagsResult[0].columns
-    for (const tagRow of tagsResult[0].values) {
-      const tag: any = {}
-      tagColumns.forEach((col, idx) => {
-        tag[col] = tagRow[idx]
-      })
-      tags.push(tag)
-    }
-  }
+  const tags = parseRows<TagRow>(tagsResult)
 
   res.json({
     data: {
@@ -439,15 +406,7 @@ app.get('/api/articles/:id/related', (req, res) => {
     [id, id, categoryId, id, categoryId]
   )
 
-  const articles: any[] = []
-  if (result.length > 0) {
-    const columns = result[0].columns
-    for (const row of result[0].values) {
-      const articleRow: any = {}
-      columns.forEach((col, idx) => { articleRow[col] = row[idx] })
-      articles.push(articleRow)
-    }
-  }
+  const articles = parseRows<ArticleRow>(result)
 
   res.json({ data: articles })
 })
@@ -533,23 +492,15 @@ app.get('/api/articles/:id/comments', (req, res) => {
     [articleId]
   )
 
-  const allComments: any[] = []
-  if (result.length > 0) {
-    const columns = result[0].columns
-    for (const row of result[0].values) {
-      const comment: any = {}
-      columns.forEach((col, idx) => { comment[col] = row[idx] })
-      allComments.push(comment)
-    }
-  }
+  const allComments = parseRows<CommentRow>(result)
 
   // Build nested tree: top-level comments have parentId = null
-  const topLevel = allComments.filter((c: any) => !c.parentId)
-  const replies = allComments.filter((c: any) => c.parentId)
+  const topLevel = allComments.filter((c) => !c.parentId)
+  const replies = allComments.filter((c) => c.parentId)
 
-  const nestReplies = (comment: any): any => {
-    const childReplies = replies.filter((r: any) => r.parentId === comment.id)
-    comment.replies = childReplies.map((r: any) => nestReplies(r))
+  const nestReplies = (comment: CommentRow & { replies?: any[] }): any => {
+    const childReplies = replies.filter((r) => r.parentId === comment.id)
+    comment.replies = childReplies.map((r) => nestReplies(r))
     return comment
   }
 
@@ -610,15 +561,7 @@ app.get('/api/admin/comments', authenticateToken, (req, res) => {
     [limit, offset]
   )
 
-  const comments: any[] = []
-  if (result.length > 0) {
-    const columns = result[0].columns
-    for (const row of result[0].values) {
-      const comment: any = {}
-      columns.forEach((col, idx) => { comment[col] = row[idx] })
-      comments.push(comment)
-    }
-  }
+  const comments = parseRows<CommentRow>(result)
 
   res.json({ data: comments, total, page, limit })
 })
@@ -663,17 +606,7 @@ app.get('/api/categories', (req, res) => {
     ORDER BY c.createdAt DESC
   `)
 
-  const categories: any[] = []
-  if (result.length > 0) {
-    const columns = result[0].columns
-    for (const row of result[0].values) {
-      const cat: any = {}
-      columns.forEach((col, idx) => {
-        cat[col] = row[idx]
-      })
-      categories.push(cat)
-    }
-  }
+  const categories = parseRows<CategoryRow>(result)
 
   res.json({ data: categories })
 })
@@ -747,17 +680,7 @@ app.get('/api/tags', (req, res) => {
     ORDER BY t.createdAt DESC
   `)
 
-  const tags: any[] = []
-  if (result.length > 0) {
-    const columns = result[0].columns
-    for (const row of result[0].values) {
-      const tag: any = {}
-      columns.forEach((col, idx) => {
-        tag[col] = row[idx]
-      })
-      tags.push(tag)
-    }
-  }
+  const tags = parseRows<TagRow>(result)
 
   res.json({ data: tags })
 })
@@ -849,7 +772,7 @@ app.put('/api/auth/password', authenticateToken, (req, res) => {
     return res.status(400).json({ message: '新密码至少6位' })
   }
 
-  const user = (req as any).user as { id: number; username: string }
+  const user = (req as AuthRequest).user
   const result = db.exec('SELECT password FROM users WHERE id = ?', [user.id])
 
   if (result.length === 0 || result[0].values.length === 0) {
@@ -923,11 +846,8 @@ app.get('/rss.xml', (req, res) => {
   )
 
   let items = ''
-  if (articles.length > 0) {
-    const columns = articles[0].columns
-    for (const row of articles[0].values) {
-      const item: any = {}
-      columns.forEach((col, idx) => { item[col] = row[idx] })
+  const parsedItems = parseRows<ArticleRow>(articles)
+  for (const item of parsedItems) {
       const pubDate = new Date(item.createdAt).toUTCString()
       const description = item.summary
         ? escapeXml(item.summary)
@@ -942,7 +862,6 @@ app.get('/rss.xml', (req, res) => {
     <pubDate>${pubDate}</pubDate>
   </item>
 `
-    }
   }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
