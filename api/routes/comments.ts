@@ -62,7 +62,7 @@ export function createCommentsRouter(db: SqlJs.Database) {
 
   router.get('/admin/comments', authenticateToken, (req, res) => {
     const page = parseInt(req.query.page as string) || 1
-    const limit = parseInt(req.query.limit as string) || 20
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50)
     const offset = (page - 1) * limit
 
     const countResult = db.exec('SELECT COUNT(*) FROM comments')

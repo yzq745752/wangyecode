@@ -10,7 +10,7 @@ export function createArticlesRouter(db: SqlJs.Database) {
 
   router.get('/', (req, res) => {
     const page = parseInt(req.query.page as string) || 1
-    const limit = parseInt(req.query.limit as string) || 9
+    const limit = Math.min(parseInt(req.query.limit as string) || 9, 50)
     const category = req.query.category as string
     const tag = req.query.tag as string
     const search = req.query.search as string
