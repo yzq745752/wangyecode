@@ -2,12 +2,12 @@ import express from 'express'
 import cors from 'cors'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import initSqlJs from 'sql.js'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import multer from 'multer'
 import rateLimit from 'express-rate-limit'
+import { initDb, saveDb, parseRows, parseFirstRow } from './db.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -19,7 +19,6 @@ if (!JWT_SECRET) {
   console.error('FATAL: JWT_SECRET environment variable is required')
   process.exit(1)
 }
-const DB_PATH = path.join(__dirname, '../data/blog.db')
 const UPLOADS_DIR = path.join(__dirname, '../data/uploads')
 
 // Ensure uploads directory exists
@@ -71,24 +70,8 @@ const commentLimiter = rateLimit({
 
 app.use('/uploads', express.static(UPLOADS_DIR))
 
-const SqlJs = await initSqlJs()
-
-let db: SqlJs.Database
-
-if (fs.existsSync(DB_PATH)) {
-  const buffer = fs.readFileSync(DB_PATH)
-  db = new SqlJs.Database(buffer)
-} else {
-  db = new SqlJs.Database()
-}
-
-const saveDb = () => {
-  if (!fs.existsSync(path.dirname(DB_PATH))) {
-    fs.mkdirSync(path.dirname(DB_PATH), { recursive: true })
-  }
-  const data = db.export()
-  fs.writeFileSync(DB_PATH, Buffer.from(data))
-}
+const { db } = await initDb()
+const save = () => saveDb(db)
 
 db.run(`
   CREATE TABLE IF NOT EXISTS users (
@@ -167,7 +150,7 @@ const initAdmin = () => {
     db.run("INSERT OR IGNORE INTO tags (name) VALUES ('前端')")
     db.run("INSERT OR IGNORE INTO tags (name) VALUES ('思考')")
 
-    saveDb()
+    save()
     console.log('初始化管理员账号和示例数据成功')
     console.log('用户名: admin')
     console.log('密码: admin123')
@@ -190,7 +173,7 @@ const initConfig = () => {
       github: 'https://github.com/yzq745752',
     })
     db.run("INSERT INTO site_config (key, value) VALUES ('about', ?)", [defaultAbout])
-    saveDb()
+    save()
   }
 }
 initConfig()
@@ -398,7 +381,7 @@ app.get('/api/articles/:id', (req, res) => {
   })
 
   db.run('UPDATE articles SET viewCount = viewCount + 1 WHERE id = ?', [id])
-  saveDb()
+  save()
 
   const tagsResult = db.exec(
     `SELECT t.id, t.name FROM tags t INNER JOIN article_tags at ON t.id = at.tagId WHERE at.articleId = ?`,
@@ -491,7 +474,7 @@ app.post('/api/articles', authenticateToken, (req, res) => {
     }
   }
 
-  saveDb()
+  save()
 
   const article = db.exec(`SELECT * FROM articles WHERE id = ?`, [articleId])
   res.status(201).json({ data: article.length > 0 ? article[0].values[0] : null })
@@ -520,7 +503,7 @@ app.put('/api/articles/:id', authenticateToken, (req, res) => {
     }
   }
 
-  saveDb()
+  save()
 
   const article = db.exec('SELECT * FROM articles WHERE id = ?', [id])
   res.json({ data: article.length > 0 ? article[0].values[0] : null })
@@ -535,7 +518,7 @@ app.delete('/api/articles/:id', authenticateToken, (req, res) => {
   }
 
   db.run('DELETE FROM articles WHERE id = ?', [id])
-  saveDb()
+  save()
 
   res.json({ message: '删除成功' })
 })
@@ -599,7 +582,7 @@ app.post('/api/articles/:id/comments', commentLimiter, (req, res) => {
     [articleId, parentId || null, author, email || '', content, now]
   )
 
-  saveDb()
+  save()
 
   const idResult = db.exec("SELECT last_insert_rowid()")
   const commentId = idResult[0].values[0][0] as number
@@ -651,7 +634,7 @@ app.put('/api/admin/comments/:id/approve', authenticateToken, (req, res) => {
   }
 
   db.run('UPDATE comments SET isApproved = ? WHERE id = ?', [isApproved ? 1 : 0, id])
-  saveDb()
+  save()
 
   res.json({ message: isApproved ? '评论已通过' : '评论已驳回' })
 })
@@ -666,7 +649,7 @@ app.delete('/api/admin/comments/:id', authenticateToken, (req, res) => {
   }
 
   db.run('DELETE FROM comments WHERE id = ? OR parentId = ?', [id, id])
-  saveDb()
+  save()
 
   res.json({ message: '删除成功' })
 })
@@ -704,7 +687,7 @@ app.post('/api/categories', authenticateToken, (req, res) => {
 
   try {
     db.run('INSERT INTO categories (name) VALUES (?)', [name])
-    saveDb()
+    save()
     const result = db.exec('SELECT * FROM categories WHERE name = ?', [name])
     res.status(201).json({ data: result.length > 0 ? result[0].values[0] : null })
   } catch {
@@ -727,7 +710,7 @@ app.put('/api/categories/:id', authenticateToken, (req, res) => {
 
   try {
     db.run('UPDATE categories SET name = ? WHERE id = ?', [name, id])
-    saveDb()
+    save()
     const result = db.exec('SELECT * FROM categories WHERE id = ?', [id])
     res.json({ data: result.length > 0 ? result[0].values[0] : null })
   } catch {
@@ -750,7 +733,7 @@ app.delete('/api/categories/:id', authenticateToken, (req, res) => {
   }
 
   db.run('DELETE FROM categories WHERE id = ?', [id])
-  saveDb()
+  save()
 
   res.json({ message: '删除成功' })
 })
@@ -788,7 +771,7 @@ app.post('/api/tags', authenticateToken, (req, res) => {
 
   try {
     db.run('INSERT INTO tags (name) VALUES (?)', [name])
-    saveDb()
+    save()
     const result = db.exec('SELECT * FROM tags WHERE name = ?', [name])
     res.status(201).json({ data: result.length > 0 ? result[0].values[0] : null })
   } catch {
@@ -811,7 +794,7 @@ app.put('/api/tags/:id', authenticateToken, (req, res) => {
 
   try {
     db.run('UPDATE tags SET name = ? WHERE id = ?', [name, id])
-    saveDb()
+    save()
     const result = db.exec('SELECT * FROM tags WHERE id = ?', [id])
     res.json({ data: result.length > 0 ? result[0].values[0] : null })
   } catch {
@@ -828,7 +811,7 @@ app.delete('/api/tags/:id', authenticateToken, (req, res) => {
   }
 
   db.run('DELETE FROM tags WHERE id = ?', [id])
-  saveDb()
+  save()
 
   res.json({ message: '删除成功' })
 })
@@ -851,7 +834,7 @@ app.put('/api/config/about', authenticateToken, (req, res) => {
   const { name, role, passion, bio, philosophy, email, github } = req.body
   const value = JSON.stringify({ name, role, passion, bio, philosophy, email, github })
   db.run("INSERT OR REPLACE INTO site_config (key, value, updatedAt) VALUES ('about', ?, ?)", [value, new Date().toISOString()])
-  saveDb()
+  save()
   res.json({ message: '保存成功' })
 })
 
@@ -880,7 +863,7 @@ app.put('/api/auth/password', authenticateToken, (req, res) => {
 
   const hashedPassword = bcrypt.hashSync(newPassword, 10)
   db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, user.id])
-  saveDb()
+  save()
 
   res.json({ message: '密码修改成功' })
 })
@@ -993,15 +976,6 @@ app.get('/api/admin/export', authenticateToken, (req, res) => {
     `)
     const articleTags = db.exec('SELECT * FROM article_tags ORDER BY articleId, tagId')
     const comments = db.exec('SELECT * FROM comments ORDER BY id')
-
-    const parseRows = (result: any) =>
-      result.length > 0 && result[0].values
-        ? result[0].values.map((row: any[]) => {
-            const obj: any = {}
-            result[0].columns.forEach((col: string, i: number) => { obj[col] = row[i] })
-            return obj
-          })
-        : []
 
     const exportData = {
       exportedAt: new Date().toISOString(),
