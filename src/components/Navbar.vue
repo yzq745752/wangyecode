@@ -3,10 +3,12 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search, LogIn, Menu, X, Terminal, Sun, Moon } from 'lucide-vue-next'
 import { useTheme } from '@/composables/useTheme'
+import { useAuthStore } from '@/stores/auth'
 
 const { theme, toggle: toggleTheme } = useTheme()
 
 const router = useRouter()
+const authStore = useAuthStore()
 const isMenuOpen = ref(false)
 const showSearch = ref(false)
 const showLogin = ref(false)
@@ -36,23 +38,12 @@ const handleLogin = async () => {
   loginError.value = ''
   loginLoading.value = true
   try {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username.value, password: password.value }),
-    })
-    const data = await response.json()
-    if (!response.ok) {
-      loginError.value = data.message || '登录失败'
-      return
-    }
-    localStorage.setItem('token', data.token)
-    showLogin.value = false
+    await authStore.login(username.value, password.value)
     username.value = ''
     password.value = ''
-    router.push('/admin/dashboard')
-  } catch {
-    loginError.value = '网络错误，请重试'
+    showLogin.value = false
+  } catch (err: any) {
+    loginError.value = err?.response?.data?.message || '登录失败'
   } finally {
     loginLoading.value = false
   }
