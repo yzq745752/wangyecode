@@ -38,21 +38,21 @@ watch(tagName, (name) => {
   <DefaultLayout>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <header class="mb-12">
-        <h1 class="font-serif text-4xl font-bold text-text-dark mb-2">
+        <h1 class="font-serif text-4xl font-bold text-primary mb-2">
           标签: #{{ tagName }}
         </h1>
-        <p class="text-text-light">
+        <p class="text-secondary">
           共 {{ articles.length }} 篇文章
         </p>
       </header>
 
       <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div v-for="i in 6" :key="i" class="card animate-pulse">
-          <div class="aspect-video bg-gray-200" />
+          <div class="aspect-video bg-bg-elevated" />
           <div class="p-6 space-y-3">
-            <div class="h-4 bg-gray-200 rounded w-1/4" />
-            <div class="h-6 bg-gray-200 rounded w-3/4" />
-            <div class="h-4 bg-gray-200 rounded w-full" />
+            <div class="h-4 bg-bg-elevated rounded w-1/4" />
+            <div class="h-6 bg-bg-elevated rounded w-3/4" />
+            <div class="h-4 bg-bg-elevated rounded w-full" />
           </div>
         </div>
       </div>
@@ -97,7 +97,7 @@ watch(tagName, (name) => {
       </div>
 
       <div v-else class="text-center py-20">
-        <p class="text-text-light text-lg">该标签下暂无文章</p>
+        <p class="text-secondary text-lg">该标签下暂无文章</p>
       </div>
     </div>
   </DefaultLayout>
