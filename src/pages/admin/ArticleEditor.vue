@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import { Save, Eye, Edit3, Terminal, Folder, Tag as TagIcon, Image, Upload } from 'lucide-vue-next'
 import apiClient from '@/api/client'
 import { articleApi, categoryApi, tagApi } from '@/api'
@@ -34,7 +35,7 @@ const articleId = computed(() => {
 const isEdit = computed(() => articleId.value !== null)
 
 const renderedContent = computed(() => {
-  return marked(content.value)
+  return DOMPurify.sanitize(marked(content.value, { async: false }))
 })
 
 const loadCategories = async () => {

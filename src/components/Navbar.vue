@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, LogIn, Menu, X, Terminal, Command, Sun, Moon } from 'lucide-vue-next'
+import { Search, LogIn, Menu, X, Terminal, Sun, Moon } from 'lucide-vue-next'
 import { useTheme } from '@/composables/useTheme'
 
 const { theme, toggle: toggleTheme } = useTheme()
@@ -168,6 +168,7 @@ const navLinks = [
                      focus:outline-none focus:border-primary/50 focus:shadow-glow
                      placeholder:text-text-dim transition-all duration-300"
               autofocus
+              @keydown.enter="handleSearch"
             />
             <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <kbd class="px-1.5 py-0.5 text-xs font-mono text-text-dim bg-bg-dark border border-border-subtle rounded">ESC</kbd>

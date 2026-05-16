@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { Plus, Edit, Trash2, Eye, Folder, Terminal } from 'lucide-vue-next'
+import { Plus, Edit, Trash2, Eye, Folder } from 'lucide-vue-next'
 import { articleApi } from '@/api'
 import type { Article } from '@/types'
 import { useToastStore } from '@/stores/toast'
 
-const router = useRouter()
 const toast = useToastStore()
 const articles = ref<Article[]>([])
 const loading = ref(true)
@@ -70,7 +68,7 @@ onMounted(loadArticles)
             </tr>
           </thead>
           <tbody class="divide-y divide-border-subtle">
-            <tr v-for="article in articles" :key="article.id" class="hover:bg-bg-hover/50 transition-colors">
+            <tr v-for="article in articles" :key="article.id" class="hover:bg-bg-hover transition-colors">
               <td class="px-5 py-3">
                 <div class="font-mono text-sm text-text-primary">{{ article.title }}</div>
                 <div class="text-xs text-text-dim line-clamp-1 mt-0.5">{{ article.summary }}</div>

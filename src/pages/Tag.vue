@@ -5,7 +5,7 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import ArticleCard from '@/components/ArticleCard.vue'
 import { articleApi } from '@/api'
 import type { Article } from '@/types'
-import { Tag as TagIcon, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { useMeta } from '@/composables/useMeta'
 
 const PER_PAGE = 12

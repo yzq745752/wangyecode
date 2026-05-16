@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Plus, Edit, Trash2, Tag as TagIcon, Terminal } from 'lucide-vue-next'
+import { Plus, Edit, Trash2, Tag as TagIcon } from 'lucide-vue-next'
 import { tagApi } from '@/api'
 import type { Tag } from '@/types'
 import { useToastStore } from '@/stores/toast'
@@ -101,7 +101,7 @@ onMounted(loadTags)
             </tr>
           </thead>
           <tbody class="divide-y divide-border-subtle">
-            <tr v-for="tag in tags" :key="tag.id" class="hover:bg-bg-hover/50 transition-colors">
+            <tr v-for="tag in tags" :key="tag.id" class="hover:bg-bg-hover transition-colors">
               <td class="px-5 py-3">
                 <span class="font-mono text-sm text-text-primary">
                   <span class="text-secondary">#</span>{{ tag.name }}

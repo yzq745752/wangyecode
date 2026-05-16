@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ═══════════════════════════════════════
    Theme Variables — Dark (default)
@@ -13,9 +13,13 @@
   --color-secondary-rgb: 177, 156, 217;
   --color-accent-rgb: 255, 107, 157;
   --color-bg-dark: #0a0a0f;
+  --color-bg-dark-rgb: 10, 10, 15;
   --color-bg-card: #12121a;
+  --color-bg-card-rgb: 18, 18, 26;
   --color-bg-hover: #1a1a2e;
+  --color-bg-hover-rgb: 26, 26, 46;
   --color-bg-elevated: #16161f;
+  --color-bg-elevated-rgb: 22, 22, 31;
   --color-text-primary: #e4e4e7;
   --color-text-secondary: #e4e4e7;
   --color-text-dim: #e4e4e7;
@@ -33,19 +37,23 @@
    Theme Variables — Light
    ═══════════════════════════════════════ */
 [data-theme="light"] {
-  --color-bg-dark: #f8f8fa;
-  --color-bg-card: #ffffff;
-  --color-bg-hover: #f0f0f5;
-  --color-bg-elevated: #e8e8ee;
-  --color-text-primary: #18181b;
-  --color-text-secondary: #18181b;
-  --color-text-dim: #18181b;
-  --color-border-subtle: #e4e4e7;
+  --color-bg-dark: #f5f0e8;
+  --color-bg-dark-rgb: 245, 240, 232;
+  --color-bg-card: #faf6f1;
+  --color-bg-card-rgb: 250, 246, 241;
+  --color-bg-hover: #ede7df;
+  --color-bg-hover-rgb: 237, 231, 223;
+  --color-bg-elevated: #e8e0d5;
+  --color-bg-elevated-rgb: 232, 224, 213;
+  --color-text-primary: #2c2416;
+  --color-text-secondary: #3d3225;
+  --color-text-dim: #6b5d4d;
+  --color-border-subtle: #d4c9b8;
   --color-border-glow: rgba(var(--color-primary-rgb), 0.12);
 
-  --color-bg-grid: rgba(177, 156, 217, 0.05);
-  --color-scrollbar-track: #f0f0f5;
-  --color-scrollbar-thumb: #d4d4d8;
+  --color-bg-grid: rgba(177, 156, 217, 0.04);
+  --color-scrollbar-track: #ede7df;
+  --color-scrollbar-thumb: #c4b8a8;
   --color-selection-bg: rgba(0, 255, 157, 0.15);
   --matrix-rain-opacity: 0.03;
 }

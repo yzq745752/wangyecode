@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename)
 
 const app = express()
 const PORT = 3001
-const JWT_SECRET = 'blog-jwt-secret-key-2024'
+const JWT_SECRET = process.env.JWT_SECRET || 'blog-jwt-secret-key-2024'
 const DB_PATH = path.join(__dirname, '../data/blog.db')
 const UPLOADS_DIR = path.join(__dirname, '../data/uploads')
 
@@ -197,7 +197,7 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(400).json({ message: '用户名和密码不能为空' })
   }
 
-  const result = db.exec("SELECT * FROM users WHERE username = '" + username.replace(/'/g, "''") + "'")
+  const result = db.exec("SELECT * FROM users WHERE username = ?", [username])
   
   if (result.length === 0 || result[0].values.length === 0) {
     return res.status(401).json({ message: '用户名或密码错误' })
@@ -398,7 +398,7 @@ app.get('/api/articles/:id', (req, res) => {
   res.json({
     data: {
       ...article,
-      viewCount: (article.viewCount as number) + 1,
+      viewCount: article.viewCount,
       category: { id: article.categoryId, name: article.categoryName },
       tags,
     },
@@ -542,10 +542,9 @@ app.get('/api/articles/:id/comments', (req, res) => {
   const topLevel = allComments.filter((c: any) => !c.parentId)
   const replies = allComments.filter((c: any) => c.parentId)
 
-  const nestReplies = (comment: any) => {
-    comment.replies = replies
-      .filter((r: any) => r.parentId === comment.id)
-      .map((r: any) => { r.replies = []; return r })
+  const nestReplies = (comment: any): any => {
+    const childReplies = replies.filter((r: any) => r.parentId === comment.id)
+    comment.replies = childReplies.map((r: any) => nestReplies(r))
     return comment
   }
 

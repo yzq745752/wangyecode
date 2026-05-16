@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Plus, Edit, Trash2, Folder, Terminal } from 'lucide-vue-next'
+import { Plus, Edit, Trash2, Folder } from 'lucide-vue-next'
 import { categoryApi } from '@/api'
 import type { Category } from '@/types'
 import { useToastStore } from '@/stores/toast'
@@ -101,7 +101,7 @@ onMounted(loadCategories)
             </tr>
           </thead>
           <tbody class="divide-y divide-border-subtle">
-            <tr v-for="category in categories" :key="category.id" class="hover:bg-bg-hover/50 transition-colors">
+            <tr v-for="category in categories" :key="category.id" class="hover:bg-bg-hover transition-colors">
               <td class="px-5 py-3 font-mono text-sm text-text-primary">{{ category.name }}</td>
               <td class="px-5 py-3 text-xs text-text-dim font-mono">{{ category.articleCount || 0 }}</td>
               <td class="px-5 py-3 text-xs text-text-dim font-mono">

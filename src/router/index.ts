@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import { jwtDecode } from 'jwt-decode'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -114,6 +115,12 @@ router.beforeEach((to) => {
   if (to.meta.requiresAuth) {
     const token = localStorage.getItem('token')
     if (!token) {
+      return { name: 'AdminLogin' }
+    }
+    try {
+      jwtDecode(token)
+    } catch {
+      localStorage.removeItem('token')
       return { name: 'AdminLogin' }
     }
   }

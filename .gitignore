@@ -11,7 +11,7 @@
 *.sig
 
 pkg/
-src/
+data/
 node_modules/
 .env
 docker-compose.override.yml

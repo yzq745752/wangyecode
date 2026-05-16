@@ -59,6 +59,3 @@ export interface Comment {
   createdAt: string
   replies?: Comment[]
 }
-  message: string
-  statusCode: number
-}

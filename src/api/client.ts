@@ -1,4 +1,4 @@
-import type { AxiosInstance, AxiosRequestConfig } from 'axios'
+import type { AxiosInstance } from 'axios'
 import axios from 'axios'
 
 const apiClient: AxiosInstance = axios.create({

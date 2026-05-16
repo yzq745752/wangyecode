@@ -10,6 +10,10 @@ import { articleApi } from '@/api'
 import type { Article } from '@/types'
 import { Calendar, Tag, Eye, Clock, Terminal, ChevronLeft, Folder } from 'lucide-vue-next'
 import { useMeta } from '@/composables/useMeta'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
+
+declare const hljs: any
 
 const route = useRoute()
 const article = ref<Article | null>(null)
@@ -48,6 +52,11 @@ const handleScroll = () => {
 onMounted(() => {
   loadArticle()
   window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
+watch(() => route.params.id, () => {
+  loadArticle()
+  window.scrollTo(0, 0)
 })
 
 watch(article, async () => {
@@ -159,7 +168,7 @@ const readTime = (content: string) => {
 
           <!-- Content -->
           <div class="geek-prose mb-16">
-            <div v-html="article.content" />
+            <div v-html="DOMPurify.sanitize(marked(article.content, { async: false }))" />
           </div>
 
           <!-- Footer -->
