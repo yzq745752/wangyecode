@@ -120,19 +120,17 @@ if (existingConfig.length === 0 || existingConfig[0].values.length === 0) {
 }
 
 // Mount route modules
+// Rate limiters applied BEFORE route mounting so they intercept before handlers
+app.use('/api/auth/login', loginLimiter)
+app.use('/api/articles/:id/comments', commentLimiter)
+
 app.use('/api/auth', createAuthRouter(db))
 app.use('/api/articles', createArticlesRouter(db))
 app.use('/api/categories', createCategoriesRouter(db))
 app.use('/api/tags', createTagsRouter(db))
 app.use('/api', createCommentsRouter(db))
-app.use('/api', createSiteRouter(db))
+app.use('/', createSiteRouter(db))
 app.use('/api', createImagesRouter())
-
-// Rate limiters applied after mounting (Express matches routes in order, so
-// these only take effect when the actual route handler runs — the limiter is
-// applied as middleware to the specific paths)
-app.post('/api/auth/login', loginLimiter)
-app.post('/api/articles/:id/comments', commentLimiter)
 
 app.listen(PORT, () => {
   console.log(`服务器运行在 http://localhost:${PORT}`)
