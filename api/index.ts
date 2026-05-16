@@ -10,7 +10,7 @@ import { createArticlesRouter } from './routes/articles.js'
 import { createCategoriesRouter } from './routes/categories.js'
 import { createTagsRouter } from './routes/tags.js'
 import { createCommentsRouter } from './routes/comments.js'
-import { createSiteRouter } from './routes/site.js'
+import { createSiteRouter, createSitemapRouter } from './routes/site.js'
 import { createImagesRouter } from './routes/images.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -129,7 +129,8 @@ app.use('/api/articles', createArticlesRouter(db))
 app.use('/api/categories', createCategoriesRouter(db))
 app.use('/api/tags', createTagsRouter(db))
 app.use('/api', createCommentsRouter(db))
-app.use('/', createSiteRouter(db))
+app.use('/api', createSiteRouter(db))
+app.use('/', createSitemapRouter(db))
 app.use('/api', createImagesRouter())
 
 app.listen(PORT, () => {

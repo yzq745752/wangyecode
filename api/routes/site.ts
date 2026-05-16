@@ -28,6 +28,41 @@ export function createSiteRouter(db: SqlJs.Database) {
     res.json({ message: '保存成功' })
   })
 
+  // Data export (admin)
+  router.get('/admin/export', authenticateToken, (req, res) => {
+    try {
+      const categories = db.exec('SELECT * FROM categories ORDER BY id')
+      const tags = db.exec('SELECT * FROM tags ORDER BY id')
+      const articles = db.exec(`
+        SELECT a.*, c.name as categoryName FROM articles a LEFT JOIN categories c ON a.categoryId = c.id ORDER BY a.id
+      `)
+      const articleTags = db.exec('SELECT * FROM article_tags ORDER BY articleId, tagId')
+      const comments = db.exec('SELECT * FROM comments ORDER BY id')
+
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        version: '1.0',
+        categories: parseRows(categories),
+        tags: parseRows(tags),
+        articles: parseRows(articles),
+        articleTags: parseRows(articleTags),
+        comments: parseRows(comments),
+      }
+
+      res.setHeader('Content-Type', 'application/json')
+      res.setHeader('Content-Disposition', `attachment; filename="blog-export-${new Date().toISOString().slice(0, 10)}.json"`)
+      res.json(exportData)
+    } catch {
+      res.status(500).json({ message: 'Export failed' })
+    }
+  })
+
+  return router
+}
+
+export function createSitemapRouter(db: SqlJs.Database) {
+  const router = Router()
+
   // Sitemap
   router.get('/sitemap.xml', (_req, res) => {
     const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
@@ -85,35 +120,6 @@ export function createSiteRouter(db: SqlJs.Database) {
 
     res.set('Content-Type', 'application/rss+xml; charset=utf-8')
     res.send(xml)
-  })
-
-  // Data export
-  router.get('/admin/export', authenticateToken, (req, res) => {
-    try {
-      const categories = db.exec('SELECT * FROM categories ORDER BY id')
-      const tags = db.exec('SELECT * FROM tags ORDER BY id')
-      const articles = db.exec(`
-        SELECT a.*, c.name as categoryName FROM articles a LEFT JOIN categories c ON a.categoryId = c.id ORDER BY a.id
-      `)
-      const articleTags = db.exec('SELECT * FROM article_tags ORDER BY articleId, tagId')
-      const comments = db.exec('SELECT * FROM comments ORDER BY id')
-
-      const exportData = {
-        exportedAt: new Date().toISOString(),
-        version: '1.0',
-        categories: parseRows(categories),
-        tags: parseRows(tags),
-        articles: parseRows(articles),
-        articleTags: parseRows(articleTags),
-        comments: parseRows(comments),
-      }
-
-      res.setHeader('Content-Type', 'application/json')
-      res.setHeader('Content-Disposition', `attachment; filename="blog-export-${new Date().toISOString().slice(0, 10)}.json"`)
-      res.json(exportData)
-    } catch {
-      res.status(500).json({ message: 'Export failed' })
-    }
   })
 
   return router

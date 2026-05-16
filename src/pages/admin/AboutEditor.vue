@@ -20,7 +20,7 @@ const saving = ref(false)
 
 onMounted(async () => {
   try {
-    const { data } = await apiClient.get('/api/config/about')
+    const { data } = await apiClient.get('/config/about')
     if (data.data) {
       form.value = { ...form.value, ...data.data }
     }
@@ -34,7 +34,7 @@ onMounted(async () => {
 const handleSubmit = async () => {
   saving.value = true
   try {
-    await apiClient.put('/api/config/about', form.value)
+    await apiClient.put('/config/about', form.value)
     toast.success('关于页已更新')
   } catch (e) {
     console.error('Failed to save:', e)

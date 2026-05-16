@@ -23,7 +23,7 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const { data } = await apiClient.get('/api/config/about')
+    const { data } = await apiClient.get('/config/about')
     about.value = data.data
   } catch (e) {
     console.error('Failed to load about data:', e)
