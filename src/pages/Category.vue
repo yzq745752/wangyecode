@@ -4,38 +4,19 @@ import { useRoute } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import ArticleCard from '@/components/ArticleCard.vue'
 import { articleApi } from '@/api'
-import type { Article } from '@/types'
 import { Folder, ChevronLeft, ChevronRight, Terminal } from 'lucide-vue-next'
 import { useMeta } from '@/composables/useMeta'
-
-const PER_PAGE = 12
+import { useArticleList } from '@/composables/useArticleList'
 
 const route = useRoute()
-const articles = ref<Article[]>([])
-const loading = ref(true)
-const categoryName = ref('')
-const page = ref(1)
-const totalArticles = ref(0)
+const categoryName = ref(route.params.name as string)
 
-const totalPages = ref(1)
+const fetchFn = (page: number, limit: number) =>
+  articleApi.getList(page, limit, { category: categoryName.value })
 
-const loadArticles = async (pageNum: number) => {
-  loading.value = true
-  page.value = pageNum
-  try {
-    const { data } = await articleApi.getList(pageNum, PER_PAGE, { category: categoryName.value })
-    articles.value = data.data
-    totalArticles.value = data.total
-    totalPages.value = Math.ceil(data.total / PER_PAGE) || 1
-  } catch (error) {
-    console.error('Failed to load articles:', error)
-  } finally {
-    loading.value = false
-  }
-}
+const { articles, loading, page, totalPages, loadArticles } = useArticleList({ fetchFn })
 
 onMounted(async () => {
-  categoryName.value = route.params.name as string
   await loadArticles(1)
 })
 

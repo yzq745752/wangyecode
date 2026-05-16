@@ -4,45 +4,19 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { useMeta } from '@/composables/useMeta'
 import ArticleCard from '@/components/ArticleCard.vue'
 import { articleApi, categoryApi, tagApi } from '@/api'
-import type { Article, Category, Tag } from '@/types'
+import type { Category, Tag } from '@/types'
 import { Folder, Tag as TagIcon, ChevronRight, ChevronDown } from 'lucide-vue-next'
+import { useArticleList } from '@/composables/useArticleList'
 
-const PER_PAGE = 9
-
-const articles = ref<Article[]>([])
 const categories = ref<Category[]>([])
 const tags = ref<Tag[]>([])
-const loading = ref(true)
-const loadingMore = ref(false)
-const page = ref(1)
-const totalArticles = ref(0)
+
+const fetchFn = (page: number, limit: number) =>
+  articleApi.getList(page, limit)
+
+const { articles, loading, loadingMore, totalArticles, loadArticles, loadMore } = useArticleList({ fetchFn })
 
 const hasMore = computed(() => articles.value.length < totalArticles.value)
-
-const loadArticles = async (pageNum: number, append = false) => {
-  if (!append) loading.value = true
-  try {
-    const { data } = await articleApi.getList(pageNum, PER_PAGE)
-    if (append) {
-      articles.value.push(...data.data)
-    } else {
-      articles.value = data.data
-    }
-    totalArticles.value = data.total
-    page.value = pageNum
-  } catch (error) {
-    console.error('Failed to load articles:', error)
-  } finally {
-    loading.value = false
-    loadingMore.value = false
-  }
-}
-
-const loadMore = async () => {
-  if (loadingMore.value || !hasMore.value) return
-  loadingMore.value = true
-  await loadArticles(page.value + 1, true)
-}
 
 const loadCategories = async () => {
   try {

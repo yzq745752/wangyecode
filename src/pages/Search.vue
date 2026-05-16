@@ -4,61 +4,34 @@ import { useRoute } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import ArticleCard from '@/components/ArticleCard.vue'
 import { articleApi } from '@/api'
-import type { Article } from '@/types'
 import { useMeta } from '@/composables/useMeta'
 import { Search as SearchIcon, Terminal, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { useArticleList } from '@/composables/useArticleList'
 
 const route = useRoute()
-const PER_PAGE = 9
+const searchQuery = ref((route.query.q as string) || '')
 
-const articles = ref<Article[]>([])
-const loading = ref(true)
-const page = ref(1)
-const totalArticles = ref(0)
-const searchQuery = ref('')
-const totalPages = ref(1)
+const fetchFn = (page: number, limit: number) =>
+  articleApi.getList(page, limit, { search: searchQuery.value })
+
+const { articles, loading, page, totalPages, totalArticles, loadArticles } = useArticleList({ fetchFn })
 
 const { setDefaultMeta } = useMeta()
 setDefaultMeta('搜索')
 
-const loadResults = async (pageNum: number) => {
-  const q = (route.query.q as string) || ''
-  searchQuery.value = q
-  if (!q) {
-    articles.value = []
-    totalArticles.value = 0
-    totalPages.value = 1
-    loading.value = false
-    return
-  }
-
-  loading.value = true
-  try {
-    const { data } = await articleApi.getList(pageNum, PER_PAGE, { search: q })
-    articles.value = data.data
-    totalArticles.value = data.total
-    totalPages.value = Math.ceil(data.total / PER_PAGE)
-    page.value = pageNum
-  } catch (error) {
-    console.error('Search failed:', error)
-    articles.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
 const goToPage = (p: number) => {
   if (p < 1 || p > totalPages.value) return
-  loadResults(p)
+  loadArticles(p)
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 watch(() => route.query.q, () => {
-  loadResults(1)
+  searchQuery.value = (route.query.q as string) || ''
+  loadArticles(1)
 })
 
 onMounted(() => {
-  loadResults(1)
+  loadArticles(1)
 })
 </script>
 
