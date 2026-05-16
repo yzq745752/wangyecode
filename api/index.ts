@@ -7,6 +7,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import multer from 'multer'
+import rateLimit from 'express-rate-limit'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -51,6 +52,23 @@ const upload = multer({
 
 app.use(cors())
 app.use(express.json())
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: '登录尝试过于频繁，请15分钟后再试' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+const commentLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: { message: '评论提交过于频繁，请稍后再试' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
 app.use('/uploads', express.static(UPLOADS_DIR))
 
 const SqlJs = await initSqlJs()
@@ -194,7 +212,7 @@ const authenticateToken = (req: express.Request, res: express.Response, next: ex
   }
 }
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', loginLimiter, (req, res) => {
   const { username, password } = req.body
 
   if (!username || !password) {
@@ -555,7 +573,7 @@ app.get('/api/articles/:id/comments', (req, res) => {
   res.json({ data: topLevel.map(nestReplies) })
 })
 
-app.post('/api/articles/:id/comments', (req, res) => {
+app.post('/api/articles/:id/comments', commentLimiter, (req, res) => {
   const articleId = parseInt(req.params.id)
   const { author, email, content, parentId } = req.body
 
